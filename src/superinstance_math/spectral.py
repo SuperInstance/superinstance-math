@@ -96,20 +96,31 @@ def top_k_eigenvalues(
             v = [vi - proj * ei for vi, ei in zip(v, ev)]
         v = _normalize(v)
 
-        # Power iteration (find smallest eigenvalue by shifting)
-        # We use the fact that for Laplacians, the smallest eig is ≈ 0
-        # Use inverse power iteration with a small shift
-        shift = 0.0
-        for _ in range(iterations):
-            # Solve (M - shift*I) v_new = v using simple iteration
-            # For simplicity, use direct power iteration on shifted matrix
-            w = _mat_vec(M, v)
-            # Rayleigh quotient
-            lam = _dot(v, w)
-            # For smallest eigenvalue: subtract largest component
+        # Inverse iteration to find smallest eigenvalues.
+        # We compute I - alpha*M (spectral shift) so that the smallest
+        # eigenvalue of M becomes the largest of (I - alpha*M), then
+        # power iteration converges to it.
+        # Estimate spectral radius with a few power iterations first.
+        v_tmp = _normalize([rng.gauss(0, 1) for _ in range(n)])
+        rho = 0.0
+        for _ in range(50):
+            w_tmp = _mat_vec(M, v_tmp)
+            rho = _dot(v_tmp, w_tmp)
+            v_tmp = _normalize(w_tmp)
+        if abs(rho) < 1e-15:
+            rho = 1.0
+        alpha = 1.0 / rho  # spectral shift
+
+        for it in range(iterations):
+            # Shifted matrix: S = I - alpha*M
+            w = [v[i] - alpha * sum(M[i][j] * v[j] for j in range(n)) for i in range(n)]
+            # Rayleigh quotient on original matrix
+            Mv = _mat_vec(M, v)
+            lam = _dot(v, Mv)
+
             w = _normalize(w)
 
-            # Orthogonalize
+            # Orthogonalize against found eigenvectors
             for ev in eigenvectors:
                 proj = _dot(w, ev)
                 w = [wi - proj * ei for wi, ei in zip(w, ev)]
