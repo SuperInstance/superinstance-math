@@ -6,6 +6,8 @@ import math
 import random
 from typing import Sequence
 
+from ._numpy_backend import HAS_NUMPY, graph_laplacian_np, top_k_eigenvalues_np
+
 
 def graph_laplacian(
     adjacency: Sequence[Sequence[float]],
@@ -16,6 +18,13 @@ def graph_laplacian(
     If normalized: L_norm = D^{-1/2} L D^{-1/2} = I - D^{-1/2} A D^{-1/2}.
     If unnormalized: L = D - A.
     """
+    # Try numpy-accelerated path first
+    if HAS_NUMPY:
+        result = graph_laplacian_np(adjacency, normalized=normalized)
+        if result is not None:
+            return result
+
+    # Pure-Python fallback
     n = len(adjacency)
     A = [list(row) for row in adjacency]
 
@@ -75,6 +84,13 @@ def top_k_eigenvalues(
     Returns:
         (eigenvalues, eigenvectors) sorted by eigenvalue ascending.
     """
+    # Try numpy-accelerated path first
+    if HAS_NUMPY:
+        evals, evecs = top_k_eigenvalues_np(matrix, k=k)
+        if evals is not None:
+            return evals, evecs
+
+    # Pure-Python fallback
     M = [list(row) for row in matrix]
     n = len(M)
 

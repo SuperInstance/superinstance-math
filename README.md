@@ -14,7 +14,14 @@ Each module treats data as living on a geometric object — a statistical manifo
 
 ```bash
 pip install superinstance-math
+
+# Optional: numpy for 100-1000x faster spectral methods
+pip install numpy
 ```
+
+### Optional Dependencies
+
+- **numpy** — When installed, `graph_laplacian()` and `top_k_eigenvalues()` automatically use numpy-accelerated backends, giving 100-1000× speedups on large matrices. The library works perfectly without numpy (pure-Python fallback), but installing it is strongly recommended for production use.
 
 ## Quick Start
 
